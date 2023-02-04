@@ -1,10 +1,12 @@
-import { GameState } from '../lux/Agent';
-import { Cell } from '../lux/Cell';
-import { Player } from '../lux/Player';
-import { GameMap } from '../lux/GameMap';
-import { GameAgent } from './GameAgent';
-import { AgentRole } from './AgentRole';
+import { GameState } from "../lux/Agent";
+import { Cell } from "../lux/Cell";
+import { City } from "../lux/City";
+import { CityTile } from "../lux/CityTile";
+import { Player } from "../lux/Player";
+import { GameMap } from "../lux/GameMap";
+import { GameAgent } from "./GameAgent";
 export declare class AgentController {
+    MAX_CITY_TILES: number;
     stage: number;
     actions: Array<string>;
     gameState: GameState;
@@ -14,10 +16,21 @@ export declare class AgentController {
     resourceTiles: Array<Cell>;
     freeTiles: Array<Cell>;
     agents: Array<GameAgent>;
+    cities: Map<string, City>;
+    tiles: Array<CityTile>;
+    cityPop: Array<Object>;
+    newCity: boolean;
+    distanceToEnemy: number;
+    enemyDir: string;
     update(gameState: GameState): any;
+    updatePopulation(): void;
+    currentCityId(): any;
+    updateStage(): 0 | 1;
     stateMachine(): void;
+    updateRoles(): void;
     setAgents(): void;
-    nextRole(): AgentRole;
+    cleanUp(): void;
     computeAgents(): void;
     computeTiles(): void;
+    enemyDirection(): string;
 }
