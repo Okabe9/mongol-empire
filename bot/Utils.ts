@@ -1,6 +1,9 @@
-import internal from 'stream';
-import { Cell } from '../lux/Cell';
-import { GameMap } from '../lux/GameMap';
+import internal from "stream";
+import { Cell } from "../lux/Cell";
+import { GameMap } from "../lux/GameMap";
+import { Player } from "../lux/Player";
+import GAME_CONSTANTS from "../lux/game_constants.json";
+import { AnyTxtRecord } from "dns";
 
 export class Utils {
   static findNerestResource(pos: Array<number>, resources: Array<Cell>) {}
@@ -29,5 +32,34 @@ export class Utils {
       }
     }
     return freeTile;
+  }
+
+  static enemyDirection(player: Player, opponent: Player) {
+    let initialPos = player.units[0].pos;
+    let initialEnemyPos = opponent.units[1].pos;
+
+    let x = initialPos.x - initialEnemyPos.x;
+    let y = initialPos.y - initialEnemyPos.y;
+
+    if (x > y) {
+      if (x > 0) {
+        return GAME_CONSTANTS.DIRECTIONS.WEST;
+      } else {
+        return GAME_CONSTANTS.DIRECTIONS.EAST;
+      }
+    } else {
+      if (y > 0) {
+        return GAME_CONSTANTS.DIRECTIONS.NORTH;
+      } else {
+        return GAME_CONSTANTS.DIRECTIONS.SOUTH;
+      }
+    }
+  }
+
+  static cleanUp(arr: Array<any>, player: Player) {
+    let aux = arr.filter(
+      (agent) => player.units.findIndex((l): any => l.id == agent.id) < 0
+    );
+    arr = aux;
   }
 }

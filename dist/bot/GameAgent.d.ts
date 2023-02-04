@@ -12,11 +12,10 @@ export declare class GameAgent {
     target: string;
     turnsRunning: 0;
     constructor(ag: Unit);
-    agentRoutine(): void;
     agentActions(resourceTiles: Array<Cell>, freeTiles: Array<Cell>, gameMap: GameMap, player: Player): string;
-    getClosestCell(arr: Array<Cell> | any): Cell;
-    moveToCell(cell: any): string;
     nomadAgent(resourceTiles: Array<Cell>, freeTiles: Array<Cell>, gameMap: GameMap): string;
     sedentarianAgent(resourceTiles: Array<Cell>, freeTiles: Array<Cell>, gameMap: GameMap, player: Player): string;
-    suicideAgent(resourceTiles: Array<Cell>, freeTiles: Array<Cell>, gameMap: GameMap): string;
+    getClosestCell(arr: Array<Cell> | any): Cell;
+    moveToCell(cell: any): string;
+    moveToDir(dir: any): string;
 }

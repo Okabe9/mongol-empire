@@ -1,4 +1,4 @@
-import { Agent, GameState } from "../lux/Agent";
+import { GameState } from "../lux/Agent";
 import { Cell } from "../lux/Cell";
 import { City } from "../lux/City";
 import { CityTile } from "../lux/CityTile";
@@ -7,7 +7,6 @@ import { Player } from "../lux/Player";
 import { GameMap } from "../lux/GameMap";
 import { GameAgent } from "./GameAgent";
 import { AgentRole } from "./AgentRole";
-import GAME_CONSTANTS from "../lux/game_constants.json";
 export class AgentController {
   MAX_CITY_TILES = 4;
   stage: number = 0;
@@ -27,7 +26,7 @@ export class AgentController {
   enemyDir: string;
   public update(gameState: GameState): any {
     if (gameState.turn < 2) {
-      this.enemyDir = this.enemyDirection();
+      this.enemyDir = Utils.enemyDirection(this.player, this.opponent);
     }
     this.actions = new Array<string>();
     this.player = gameState.players[gameState.id];
@@ -36,13 +35,67 @@ export class AgentController {
     this.resourceTiles = Utils.getResourceTiles(this.gameMap);
     this.freeTiles = Utils.getFreeTiles(this.gameMap);
     this.cities = this.player.cities;
+    Utils.cleanUp(this.agents, this.player);
     this.updatePopulation();
-    this.updateStage();
+    this.checkUpdateRole();
     this.setAgents();
     this.stateMachine();
     return this.actions;
   }
+  // ############################# STATE MACHINE #############################
 
+  stateMachine() {
+    switch (this.stage) {
+      case 0:
+        this.agentActions();
+        this.tileActions();
+        break;
+    }
+  }
+
+  // ############################# ACTIONS #############################
+  agentActions() {
+    this.agents.forEach((agent: GameAgent) => {
+      this.actions.push(
+        agent.agentActions(
+          this.resourceTiles,
+          this.freeTiles,
+          this.gameMap,
+          this.player
+        )
+      );
+    });
+  }
+
+  tileActions() {
+    const city: City = this.cities.values().next().value;
+    if (city !== undefined) {
+      city.citytiles.forEach((tile: CityTile) => {
+        this.actions.push(tile.buildWorker());
+      });
+    }
+  }
+
+  // ############################# AUX METHODS #############################
+
+  // Sets Nomad role to new agents and refresh agent unit
+  setAgents() {
+    for (let i = 0; i < this.player.units.length; i++) {
+      const unit = this.player.units[i];
+      let assigned: boolean =
+        this.agents.findIndex((x) => x.id === unit.id) !== -1;
+      if (unit.isWorker() && !assigned) {
+        let aux = new GameAgent(unit);
+        aux.role = AgentRole.Nomad;
+        this.agents.push(aux);
+      } else if (unit.isWorker() && assigned) {
+        let id = this.agents.findIndex((x) => x.id === unit.id);
+        this.agents[id].gameAgent = unit;
+      }
+    }
+  }
+
+  // Update population array that controls which city must be populated
   updatePopulation() {
     for (let entry of Array.from(this.cities.entries())) {
       let value = entry[1];
@@ -60,6 +113,7 @@ export class AgentController {
     }
   }
 
+  // Returns the id of the next city to populate
   currentCityId() {
     let id;
     this.cityPop.forEach((city: any) => {
@@ -71,7 +125,8 @@ export class AgentController {
     return id;
   }
 
-  updateStage() {
+  // Check if the conditions to migrate to a new city are accomplished
+  checkUpdateRole() {
     let city: any = this.cityPop.find(
       (city: any) => city.id === this.currentCityId()
     );
@@ -80,25 +135,11 @@ export class AgentController {
     }
     if (city.tiles === this.MAX_CITY_TILES && this.newCity === false) {
       this.newCity = true;
-      return 1;
-    }
-    return 0;
-  }
-
-  stateMachine() {
-    switch (this.stage) {
-      case 0:
-        this.computeAgents();
-        this.computeTiles();
-        break;
-      case 1:
-        this.updateRoles();
-        break;
-      case 2:
-        break;
+      this.updateRoles();
     }
   }
 
+  // Update roles to agents after populating succeessfully one city
   updateRoles() {
     let city: any = this.cityPop.find(
       (city: any) => city.id === this.currentCityId()
@@ -117,73 +158,6 @@ export class AgentController {
         this.agents[ind].role = AgentRole.Suicide;
         this.agents[ind].assignedCity = null;
         this.agents[ind].target = this.enemyDir;
-      }
-    }
-  }
-  setAgents() {
-    for (let i = 0; i < this.player.units.length; i++) {
-      const unit = this.player.units[i];
-      let assigned: boolean =
-        this.agents.findIndex((x) => x.id === unit.id) !== -1;
-      if (unit.isWorker() && !assigned) {
-        let aux = new GameAgent(unit);
-        aux.role = AgentRole.Nomad;
-        this.agents.push(aux);
-      } else if (unit.isWorker() && assigned) {
-        let id = this.agents.findIndex((x) => x.id === unit.id);
-        this.agents[id].gameAgent = unit;
-      }
-    }
-  }
-  cleanUp() {
-    let aux = this.agents.filter(
-      (agent) => this.player.units.findIndex((l): any => l.id == agent.id) < 0
-    );
-    this.agents = aux;
-  }
-
-  computeAgents() {
-    this.agents.forEach((agent: GameAgent) => {
-      agent.agentRoutine();
-      this.actions.push(
-        agent.agentActions(
-          this.resourceTiles,
-          this.freeTiles,
-          this.gameMap,
-          this.player
-        )
-      );
-    });
-  }
-  computeTiles() {
-    const city: City = this.cities.values().next().value;
-    if (city !== undefined) {
-      city.citytiles.forEach((tile: CityTile) => {
-        this.actions.push(tile.buildWorker());
-      });
-    }
-    /* city.citytiles.forEach((tile) => {
-      tile.buildWorker();
-    }); */
-  }
-  enemyDirection() {
-    let initialPos = this.player.units[0].pos;
-    let initialEnemyPos = this.opponent.units[1].pos;
-
-    let x = initialPos.x - initialEnemyPos.x;
-    let y = initialPos.y - initialEnemyPos.y;
-
-    if (x > y) {
-      if (x > 0) {
-        return GAME_CONSTANTS.DIRECTIONS.WEST;
-      } else {
-        return GAME_CONSTANTS.DIRECTIONS.EAST;
-      }
-    } else {
-      if (y > 0) {
-        return GAME_CONSTANTS.DIRECTIONS.NORTH;
-      } else {
-        return GAME_CONSTANTS.DIRECTIONS.SOUTH;
       }
     }
   }

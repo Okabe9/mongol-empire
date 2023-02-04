@@ -1,13 +1,9 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AgentController = void 0;
 var Utils_1 = require("./Utils");
 var GameAgent_1 = require("./GameAgent");
 var AgentRole_1 = require("./AgentRole");
-var game_constants_json_1 = __importDefault(require("../lux/game_constants.json"));
 var AgentController = /** @class */ (function () {
     function AgentController() {
         this.MAX_CITY_TILES = 4;
@@ -20,7 +16,7 @@ var AgentController = /** @class */ (function () {
     }
     AgentController.prototype.update = function (gameState) {
         if (gameState.turn < 2) {
-            this.enemyDir = this.enemyDirection();
+            this.enemyDir = Utils_1.Utils.enemyDirection(this.player, this.opponent);
         }
         this.actions = new Array();
         this.player = gameState.players[gameState.id];
@@ -29,6 +25,7 @@ var AgentController = /** @class */ (function () {
         this.resourceTiles = Utils_1.Utils.getResourceTiles(this.gameMap);
         this.freeTiles = Utils_1.Utils.getFreeTiles(this.gameMap);
         this.cities = this.player.cities;
+        Utils_1.Utils.cleanUp(this.agents, this.player);
         this.updatePopulation();
         this.updateStage();
         this.setAgents();
@@ -82,13 +79,11 @@ var AgentController = /** @class */ (function () {
     AgentController.prototype.stateMachine = function () {
         switch (this.stage) {
             case 0:
-                this.computeAgents();
-                this.computeTiles();
+                this.agentActions();
+                this.tileActions();
                 break;
             case 1:
                 this.updateRoles();
-                break;
-            case 2:
                 break;
         }
     };
@@ -133,19 +128,13 @@ var AgentController = /** @class */ (function () {
             _loop_2(i);
         }
     };
-    AgentController.prototype.cleanUp = function () {
-        var _this = this;
-        var aux = this.agents.filter(function (agent) { return _this.player.units.findIndex(function (l) { return l.id == agent.id; }) < 0; });
-        this.agents = aux;
-    };
-    AgentController.prototype.computeAgents = function () {
+    AgentController.prototype.agentActions = function () {
         var _this = this;
         this.agents.forEach(function (agent) {
-            agent.agentRoutine();
             _this.actions.push(agent.agentActions(_this.resourceTiles, _this.freeTiles, _this.gameMap, _this.player));
         });
     };
-    AgentController.prototype.computeTiles = function () {
+    AgentController.prototype.tileActions = function () {
         var _this = this;
         var city = this.cities.values().next().value;
         if (city !== undefined) {
@@ -156,28 +145,6 @@ var AgentController = /** @class */ (function () {
         /* city.citytiles.forEach((tile) => {
           tile.buildWorker();
         }); */
-    };
-    AgentController.prototype.enemyDirection = function () {
-        var initialPos = this.player.units[0].pos;
-        var initialEnemyPos = this.opponent.units[1].pos;
-        var x = initialPos.x - initialEnemyPos.x;
-        var y = initialPos.y - initialEnemyPos.y;
-        if (x > y) {
-            if (x > 0) {
-                return game_constants_json_1.default.DIRECTIONS.WEST;
-            }
-            else {
-                return game_constants_json_1.default.DIRECTIONS.EAST;
-            }
-        }
-        else {
-            if (y > 0) {
-                return game_constants_json_1.default.DIRECTIONS.NORTH;
-            }
-            else {
-                return game_constants_json_1.default.DIRECTIONS.SOUTH;
-            }
-        }
     };
     return AgentController;
 }());

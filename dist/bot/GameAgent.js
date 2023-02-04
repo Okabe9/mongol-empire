@@ -12,10 +12,9 @@ var GameAgent = /** @class */ (function () {
         this.gameAgent = ag;
         this.id = this.gameAgent.id;
     }
-    GameAgent.prototype.agentRoutine = function () {
-        this.canGather = this.gameAgent.getCargoSpaceLeft() !== 0;
-    };
+    // ############################# Machine State #############################
     GameAgent.prototype.agentActions = function (resourceTiles, freeTiles, gameMap, player) {
+        this.canGather = this.gameAgent.getCargoSpaceLeft() !== 0;
         switch (this.role) {
             case AgentRole_1.AgentRole.Nomad:
                 return this.nomadAgent(resourceTiles, freeTiles, gameMap);
@@ -25,31 +24,13 @@ var GameAgent = /** @class */ (function () {
               return this.suicideAgent(resourceTiles, freeTiles, gameMap); */
         }
     };
-    GameAgent.prototype.getClosestCell = function (arr) {
-        var _this = this;
-        var closestCell = null;
-        var closestDist = 9999999;
-        arr.forEach(function (cell) {
-            var dist = cell.pos.distanceTo(_this.gameAgent.pos);
-            if (dist < closestDist) {
-                closestDist = dist;
-                closestCell = cell;
-            }
-        });
-        return closestCell;
-    };
-    GameAgent.prototype.moveToCell = function (cell) {
-        if (cell !== null) {
-            var dir = this.gameAgent.pos.directionTo(cell.pos);
-            return this.gameAgent.move(dir);
-        }
-    };
+    // ############################# Agent Behaviour #############################
     GameAgent.prototype.nomadAgent = function (resourceTiles, freeTiles, gameMap) {
         // we iterate over all our units and do something with them
         if (this.gameAgent.canAct()) {
             if (this.turnsRunning < 10) {
                 this.turnsRunning += 1;
-                return this.gameAgent.move(this.target);
+                return this.moveToDir(this.target);
             }
             if (this.canGather) {
                 // if the this.gameAgent is a worker and we have space in cargo, lets find the nearest resource tile and try to mine it
@@ -92,31 +73,28 @@ var GameAgent = /** @class */ (function () {
             }
         }
     };
-    GameAgent.prototype.suicideAgent = function (resourceTiles, freeTiles, gameMap) {
-        // we iterate over all our units and do something with them
-        if (this.gameAgent.canAct()) {
-            if (this.canGather) {
-                // if the this.gameAgent is a worker and we have space in cargo, lets find the nearest resource tile and try to mine it
-                var woodTiles = resourceTiles.filter(function (cell) { return cell.resource.type === game_constants_json_1.default.RESOURCE_TYPES.WOOD; });
-                var closestResourceTile = this.getClosestCell(woodTiles);
-                return this.moveToCell(closestResourceTile);
+    // ############################# Aux Methods  #############################
+    GameAgent.prototype.getClosestCell = function (arr) {
+        var _this = this;
+        var closestCell = null;
+        var closestDist = 9999999;
+        arr.forEach(function (cell) {
+            var dist = cell.pos.distanceTo(_this.gameAgent.pos);
+            if (dist < closestDist) {
+                closestDist = dist;
+                closestCell = cell;
             }
-            else if (this.gameAgent.canBuild(gameMap)) {
-                return this.gameAgent.buildCity();
-            }
-            else {
-                var closestFreeTile = this.getClosestCell(freeTiles);
-                return this.moveToCell(closestFreeTile);
-            }
+        });
+        return closestCell;
+    };
+    GameAgent.prototype.moveToCell = function (cell) {
+        if (cell !== null) {
+            var dir = this.gameAgent.pos.directionTo(cell.pos);
+            return this.gameAgent.move(dir);
         }
-        else {
-            // if this.gameAgent is a worker and there is no cargo space left, and we have cities, lets return to them
-            /* if (player.cities.size > 0) {
-                const city: City = player.cities.values().next().value;
-                let closestCityTile = this.getClosestCell(city.citytiles);
-                return this.moveToCell(closestCityTile);
-              }*/
-        }
+    };
+    GameAgent.prototype.moveToDir = function (dir) {
+        return this.gameAgent.move(dir);
     };
     return GameAgent;
 }());

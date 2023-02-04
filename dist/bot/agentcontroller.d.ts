@@ -29,8 +29,6 @@ export declare class AgentController {
     stateMachine(): void;
     updateRoles(): void;
     setAgents(): void;
-    cleanUp(): void;
-    computeAgents(): void;
-    computeTiles(): void;
-    enemyDirection(): string;
+    agentActions(): void;
+    tileActions(): void;
 }
