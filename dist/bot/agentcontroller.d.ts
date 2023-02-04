@@ -23,12 +23,12 @@ export declare class AgentController {
     distanceToEnemy: number;
     enemyDir: string;
     update(gameState: GameState): any;
-    updatePopulation(): void;
-    currentCityId(): any;
-    updateStage(): 0 | 1;
     stateMachine(): void;
-    updateRoles(): void;
-    setAgents(): void;
     agentActions(): void;
     tileActions(): void;
+    setAgents(): void;
+    updatePopulation(): void;
+    currentCityId(): any;
+    checkUpdateRole(): void;
+    updateRoles(): void;
 }

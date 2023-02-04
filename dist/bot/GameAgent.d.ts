@@ -16,6 +16,6 @@ export declare class GameAgent {
     nomadAgent(resourceTiles: Array<Cell>, freeTiles: Array<Cell>, gameMap: GameMap): string;
     sedentarianAgent(resourceTiles: Array<Cell>, freeTiles: Array<Cell>, gameMap: GameMap, player: Player): string;
     getClosestCell(arr: Array<Cell> | any): Cell;
-    moveToCell(cell: any): string;
-    moveToDir(dir: any): string;
+    moveToCell(cell: Cell): string;
+    moveToDir(dir: string): string;
 }
